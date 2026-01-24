@@ -6,6 +6,25 @@ import 'api.dart';
 /// TELA PRINCIPAL — LISTA DE EVENTOS
 /// =======================================================
 
+String formatHora(dynamic hora) {
+  if (hora == null) return "-";
+
+  // já vem formatada
+  if (hora is String && hora.contains(":")) {
+    return hora.substring(0, 5);
+  }
+
+  // veio em segundos (54000)
+  if (hora is num) {
+    final totalSeconds = hora.toInt();
+    final h = totalSeconds ~/ 3600;
+    final m = (totalSeconds % 3600) ~/ 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  }
+
+  return hora.toString();
+}
+
 class EventosScreen extends StatefulWidget {
   final int idUsuario;
   const EventosScreen({super.key, required this.idUsuario});
@@ -106,8 +125,8 @@ class _EventosScreenState extends State<EventosScreen> {
                 title: Text(e['nome_evento']),
                 subtitle: Text('${e['data_evento']} • ${e['status']}'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final atualizado = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => EventoDetalheScreen(
@@ -115,7 +134,11 @@ class _EventosScreenState extends State<EventosScreen> {
                         evento: e,
                       ),
                     ),
-                  ).then((_) => setState(() => _recarregar()));
+                  );
+
+                  if (atualizado == true) {
+                    setState(() => _recarregar());
+                  }
                 },
               );
             },
@@ -194,6 +217,55 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
     }
   }
 
+  void _confirmarExcluir(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Excluir evento'),
+        content: const Text(
+          'Este evento será excluído permanentemente.\n'
+          'Todos os itens serão devolvidos ao estoque.\n\n'
+          'Deseja continuar?',
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancelar'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text(
+              'Excluir',
+              style: TextStyle(color: Colors.red),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _excluirEvento();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _excluirEvento() async {
+    try {
+      await api.excluirEvento(
+        idEvento: widget.evento['id_evento'],
+        idUsuario: widget.idUsuario,
+      );
+
+      if (!mounted) return;
+
+      // Volta para a lista e força reload
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao excluir evento')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = widget.evento['status'];
@@ -211,7 +283,7 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
             Text('Cliente: ${widget.evento['nome_cliente'] ?? '-'}'),
             Text('Local: ${widget.evento['endereco_evento'] ?? '-'}'),
             Text('Data: ${widget.evento['data_evento']}'),
-            Text('Hora: ${widget.evento['hora_evento'] ?? '-'}'),
+            Text('Hora: ${formatHora(widget.evento['hora_evento'])}'),
             Text('Status: $status'),
 
             const SizedBox(height: 20),
@@ -356,6 +428,37 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('Baixar PDF'),
               onPressed: _carregando ? null : _abrirPdf,
+            ),
+
+            ElevatedButton.icon(
+              onPressed: _carregando ? null : () => _confirmarExcluir(context),
+              icon: const Icon(
+                Icons.delete,
+                color: Colors.red,
+              ),
+              label: const Text(
+                'Excluir evento',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.red,
+                elevation: 0,
+                side: const BorderSide(
+                  color: Colors.red,
+                  width: 1.2,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+              ),
             ),
           ],
         ),

@@ -9,12 +9,12 @@ from routers import home
 
 app = FastAPI(title="EventControl API")
 
-# =========================
+# ==============
 # CORS
-# =========================
+# ==============
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],        # em produção, restringir
+    allow_origins=["*"],        
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,7 +35,7 @@ app.include_router(
     tags=["Home"]
 )
 
-# ✅ CATÁLOGO (categorias + itens)
+
 app.include_router(
     catalogo.router,
     prefix="/catalogo",

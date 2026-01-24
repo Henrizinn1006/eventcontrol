@@ -158,29 +158,45 @@ def editar_evento(
 
 
 @router.delete("/{id_evento}")
-def excluir_evento(id_usuario: int, id_evento: int):
+def excluir_evento(id_evento: int, id_usuario: int):
     con = get_connection()
-    cur = con.cursor()
-
+    cur = con.cursor(dictionary=True)
     try:
-        # remove itens do evento
-        cur.execute(
-            "DELETE FROM itens_evento WHERE id_evento=%s",
-            (id_evento,)
-        )
+        # 1️⃣ Busca itens do evento
+        cur.execute("""
+            SELECT id_item,
+                   quantidade_locada,
+                   quantidade_devolvida
+            FROM itens_evento
+            WHERE id_evento=%s
+        """, (id_evento,))
+        itens = cur.fetchall()
 
-        # remove evento
+        # 2️⃣ Devolve tudo ao estoque
+        for item in itens:
+            em_uso = item["quantidade_locada"] - item["quantidade_devolvida"]
+
+            if em_uso > 0:
+                cur.execute("""
+                    UPDATE catalogo_itens
+                    SET quantidade_total = quantidade_total + %s
+                    WHERE id_item=%s AND id_usuario=%s
+                """, (em_uso, item["id_item"], id_usuario))
+
+        # 3️⃣ Remove itens do evento
+        cur.execute("""
+            DELETE FROM itens_evento
+            WHERE id_evento=%s
+        """, (id_evento,))
+
+        # 4️⃣ Remove o evento
         cur.execute("""
             DELETE FROM eventos
             WHERE id_evento=%s AND id_usuario=%s
         """, (id_evento, id_usuario))
 
-        if cur.rowcount == 0:
-            raise HTTPException(404, "Evento não encontrado")
-
         con.commit()
         return {"ok": True}
-
     finally:
         cur.close()
         con.close()
@@ -314,7 +330,14 @@ def gerar_pdf(
 
     try:
         cur.execute("""
-            SELECT *
+            SELECT
+                id_evento,
+                nome_evento,
+                nome_cliente,
+                endereco_evento,
+                data_evento,
+                TIME_FORMAT(hora_evento, '%H:%i') AS hora_evento,
+                status
             FROM eventos
             WHERE id_evento=%s AND id_usuario=%s
         """, (id_evento, id_usuario))

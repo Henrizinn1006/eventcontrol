@@ -374,13 +374,18 @@ class ApiService {
     }
   }
 
-  Future<void> excluirEvento(int idUsuario, int idEvento) async {
-    final res = await http.delete(
-      Uri.parse('$baseUrl/eventos/$idEvento?id_usuario=$idUsuario'),
+  Future<void> excluirEvento({
+    required int idEvento,
+    required int idUsuario,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/eventos/$idEvento?id_usuario=$idUsuario',
     );
 
+    final res = await http.delete(uri);
+
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception('Erro ao excluir evento');
     }
   }
 
