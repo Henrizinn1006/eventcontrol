@@ -2,13 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'api.dart';
 
-/// =======================================================
 /// TELA PRINCIPAL — CATEGORIAS
-/// =======================================================
 
 class CatalogoScreen extends StatefulWidget {
   final int idUsuario;
@@ -127,9 +129,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   }
 }
 
-/// =======================================================
 /// TELA — ITENS DA CATEGORIA (COM IMAGEM)
-/// =======================================================
 
 class ItensCategoriaScreen extends StatefulWidget {
   final int idUsuario;
@@ -177,6 +177,61 @@ class _ItensCategoriaScreenState extends State<ItensCategoriaScreen> {
     );
   }
 
+  Future<void> gerarPdfCategoria(int idCategoria, int idUsuario) async {
+    if (idUsuario <= 0 || idCategoria <= 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('id_usuario ou id_categoria inválido para gerar o PDF.')),
+      );
+      return;
+    }
+
+    final url = Uri.parse(
+      "${ApiService.baseUrl}/catalogo/categorias/$idCategoria/pdf?id_usuario=$idUsuario",
+    );
+
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final directory = await getTemporaryDirectory();
+        final filePath = "${directory.path}/catalogo.pdf";
+
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        final result = await Share.shareXFiles(
+          [XFile(filePath)],
+          text: "Catálogo de Itens",
+        );
+
+        if (result.status == ShareResultStatus.dismissed) {
+          await OpenFile.open(filePath);
+        }
+      } else if (response.statusCode == 422) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro 422: envie ?id_usuario=<id> na URL do PDF.')),
+        );
+      } else if (response.statusCode == 404) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Categoria não encontrada para este usuário (404).')),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao gerar PDF (${response.statusCode}).')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao gerar PDF: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,141 +254,158 @@ class _ItensCategoriaScreenState extends State<ItensCategoriaScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: itensFuture,
-        builder: (_, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snap.hasError) {
-            return Center(child: Text('Erro: ${snap.error}'));
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  print("ID USUARIO: ${widget.idUsuario}");
+                  print("ID CATEGORIA: ${widget.idCategoria}");
+                  gerarPdfCategoria(widget.idCategoria, widget.idUsuario);
+                },
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Compartilhar Catálogo'),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: itensFuture,
+              builder: (_, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snap.hasError) {
+                  return Center(child: Text('Erro: ${snap.error}'));
+                }
 
-          final itens = snap.data ?? [];
-          if (itens.isEmpty) {
-            return const Center(child: Text('Nenhum item nesta categoria'));
-          }
+                final itens = snap.data ?? [];
+                if (itens.isEmpty) {
+                  return const Center(child: Text('Nenhum item nesta categoria'));
+                }
 
-          return ListView.separated(
-            itemCount: itens.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (_, i) {
-              final it = itens[i];
-              final idItem = _readInt(it['id_item']);
-              
-              print(it);
-              
-              final disponivel = it['quantidade_disponivel'];
-              final int total = it['quantidade_total'] ?? 0;
+                return ListView.separated(
+                  itemCount: itens.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final it = itens[i];
+                    final idItem = _readInt(it['id_item']);
 
-              final imageUrl =
-                  '${ApiService.baseUrl}/catalogo/imagens/itens/${it['id_item']}'
-                  '?id_usuario=${widget.idUsuario}';
-              print('🖼️ URL da imagem: $imageUrl');
+                    final disponivel = it['quantidade_disponivel'];
 
-              return ListTile(
-                leading: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    imageUrl,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.image_not_supported);
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      );
-                    },
-                  ),
-                ),
-                title: Text(it['nome_item'] ?? '-'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${it['abreviacao'] ?? '-'}'),
-                    const SizedBox(height: 4),
-                    Text(
-                      disponivel == null
-                          ? 'Erro'
-                          : disponivel == 0
-                              ? 'Indisponível'
-                              : 'Disponível: $disponivel',
-                      style: TextStyle(
-                        color: disponivel == 0 ? Colors.red : Colors.green,
-                        fontWeight: FontWeight.bold,
+                    final imageUrl =
+                        '${ApiService.baseUrl}/catalogo/imagens/itens/${it['id_item']}'
+                        '?id_usuario=${widget.idUsuario}';
+
+                    return ListTile(
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          imageUrl,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.image_not_supported);
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const SizedBox(
+                              width: 56,
+                              height: 56,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () async {
-                        final ok = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ItemFormScreen(
-                              idUsuario: widget.idUsuario,
-                              idCategoria: widget.idCategoria,
-                              item: Map<String, dynamic>.from(it),
+                      title: Text(it['nome_item'] ?? '-'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${it['abreviacao'] ?? '-'}'),
+                          const SizedBox(height: 4),
+                          Text(
+                            disponivel == null
+                                ? 'Erro'
+                                : disponivel == 0
+                                    ? 'Indisponível'
+                                    : 'Disponível: $disponivel',
+                            style: TextStyle(
+                              color: disponivel == 0 ? Colors.red : Colors.green,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                        if (ok == true) {
-                          _imgCache.remove(idItem); // recarrega só esse item
-                          setState(_recarregar);
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        final confirmar = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text('Excluir item'),
-                            content: const Text('Deseja realmente excluir este item?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancelar'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Excluir'),
-                              ),
-                            ],
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () async {
+                              final ok = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ItemFormScreen(
+                                    idUsuario: widget.idUsuario,
+                                    idCategoria: widget.idCategoria,
+                                    item: Map<String, dynamic>.from(it),
+                                  ),
+                                ),
+                              );
+                              if (ok == true) {
+                                _imgCache.remove(idItem);
+                                setState(_recarregar);
+                              }
+                            },
                           ),
-                        );
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirmar = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Excluir item'),
+                                  content: const Text('Deseja realmente excluir este item?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: const Text('Excluir'),
+                                    ),
+                                  ],
+                                ),
+                              );
 
-                        if (confirmar != true || idItem == null) return;
+                              if (confirmar != true || idItem == null) return;
 
-                        try {
-                          await api.excluirItem(widget.idUsuario, idItem);
-                          _imgCache.remove(idItem);
-                          setState(_recarregar);
-                        } catch (e) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Erro: $e')),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                              try {
+                                await api.excluirItem(widget.idUsuario, idItem);
+                                _imgCache.remove(idItem);
+                                setState(_recarregar);
+                              } catch (e) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Erro: $e')),
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -409,9 +481,7 @@ class _ThumbBytes extends StatelessWidget {
   }
 }
 
-/// =======================================================
 /// FORM — CRIAR / EDITAR ITEM (com imagem)
-/// =======================================================
 
 class ItemFormScreen extends StatefulWidget {
   final int idUsuario;
@@ -583,9 +653,9 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
   }
 }
 
-/// =======================================================
+
 /// VISUALIZAR IMAGEM (BYTES)
-/// =======================================================
+
 
 class VisualizarImagemBytesScreen extends StatelessWidget {
   final Uint8List bytes;

@@ -10,9 +10,7 @@ from db import get_connection
 
 router = APIRouter()
 
-# =========================
 # MODELS
-# =========================
 
 class Cadastro(BaseModel):
     nome: str
@@ -37,9 +35,7 @@ class NovaSenha(BaseModel):
     nova_senha: str
     confirmar_senha: str
 
-# =========================
 # UTILIDADES
-# =========================
 
 def hash_senha(senha: str) -> str:
     return bcrypt.hashpw(senha.encode(), bcrypt.gensalt()).decode()
@@ -72,9 +68,7 @@ Equipe EventMaster
         smtp.login(remetente, senha_email)
         smtp.send_message(msg)
 
-# =========================
 # ROTAS
-# =========================
 
 @router.post("/cadastro")
 def cadastrar(dados: Cadastro):

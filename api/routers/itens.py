@@ -4,9 +4,7 @@ from db import get_connection
 
 router = APIRouter()
 
-# ==================================================
 # LISTAR ITENS (por categoria + usuário)
-# ==================================================
 
 @router.get("/")
 def listar_itens(
@@ -46,10 +44,8 @@ def listar_itens(
         cur.close()
         con.close()
 
-
-# ==================================================
 # CRIAR ITEM
-# ==================================================
+
 
 @router.post("/")
 def criar_item(
@@ -86,10 +82,7 @@ def criar_item(
         cur.close()
         con.close()
 
-
-# ==================================================
 # EDITAR ITEM
-# ==================================================
 
 @router.put("/{id_item}")
 def editar_item(
@@ -125,10 +118,8 @@ def editar_item(
         cur.close()
         con.close()
 
-
-# ==================================================
 # ATUALIZAR IMAGEM DO ITEM
-# ==================================================
+
 
 @router.put("/{id_item}/imagem")
 def atualizar_imagem(
@@ -157,9 +148,7 @@ def atualizar_imagem(
         con.close()
 
 
-# ==================================================
 # BUSCAR IMAGEM DO ITEM
-# ==================================================
 
 @router.get("/{id_item}/imagem")
 def imagem_item(
@@ -185,9 +174,7 @@ def imagem_item(
         con.close()
 
 
-# ==================================================
 # EXCLUIR ITEM
-# ==================================================
 
 @router.delete("/{id_item}")
 def excluir_item(

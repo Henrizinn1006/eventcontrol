@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Form
 from db import get_connection
 
 router = APIRouter()
@@ -44,3 +44,32 @@ def dados_painel(id_usuario: int):
     except Exception as e:
         print("ERRO HOME:", e)
         raise HTTPException(500, "Erro interno na Home")
+
+
+@router.put("/empresa")
+def atualizar_nome_empresa(
+    id_usuario: int = Form(...),
+    nome_empresa: str = Form(...)
+):
+    nome_empresa = (nome_empresa or "").strip()
+
+    if not nome_empresa:
+        raise HTTPException(400, "Nome inválido")
+
+    con = get_connection()
+    cur = con.cursor()
+    try:
+        cur.execute("""
+            UPDATE usuarios
+            SET nome_empresa=%s
+            WHERE id_usuario=%s
+        """, (nome_empresa, id_usuario))
+
+        if cur.rowcount == 0:
+            raise HTTPException(404, "Usuário não encontrado")
+
+        con.commit()
+        return {"sucesso": True}
+    finally:
+        cur.close()
+        con.close()

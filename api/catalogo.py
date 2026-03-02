@@ -5,9 +5,7 @@ from db import get_connection
 
 router = APIRouter()
 
-# ==================================================
 # MODELS (para Swagger / Postman)
-# ==================================================
 
 class CategoriaIn(BaseModel):
     id_usuario: int
@@ -19,9 +17,7 @@ class ItemEditIn(BaseModel):
     abreviacao: str = ""
     quantidade_total: int
 
-# ==================================================
 # HELPERS
-# ==================================================
 
 async def _get_json_body(request: Request) -> dict:
     try:
@@ -32,9 +28,7 @@ async def _get_json_body(request: Request) -> dict:
 def _strip(v) -> str:
     return (v or "").strip()
 
-# ==================================================
 # CATEGORIAS
-# ==================================================
 
 @router.get("/categorias/{id_usuario}")
 def listar_categorias(id_usuario: int):
@@ -53,8 +47,6 @@ def listar_categorias(id_usuario: int):
         con.close()
 
 
-# ✅ CORREÇÃO PRINCIPAL:
-# Agora aceita FORM (Flutter) e também JSON (Swagger/Postman)
 @router.post("/categorias")
 async def criar_categoria(
     request: Request,
@@ -85,8 +77,6 @@ async def criar_categoria(
         cur.close()
         con.close()
 
-
-# (Opcional, mas recomendado) editar via FORM/JSON também
 @router.put("/categorias/{id_categoria}")
 async def editar_categoria(
     id_categoria: int,
@@ -153,9 +143,7 @@ def excluir_categoria(id_usuario: int, id_categoria: int):
         cur.close()
         con.close()
 
-# ==================================================
 # ITENS
-# ==================================================
 
 def _quantidade_disponivel(cur, id_usuario: int, id_item: int) -> int:
     # total do catálogo

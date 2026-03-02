@@ -6,30 +6,31 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class ApiService {
-  // =========================
   // CONFIG
-  // =========================
   static const String baseUrl = 'http://eventcontrolmaster.shop:8000';
+  static const Duration _requestTimeout = Duration(seconds: 8);
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
       };
 
-  // =========================
+  String _decodeBody(http.Response res) => utf8.decode(res.bodyBytes);
+
+  dynamic _decodeJson(http.Response res) => jsonDecode(_decodeBody(res));
+
   // AUTH
-  // =========================
 
   Future<Map<String, dynamic>> login(String email, String senha) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: _headers,
       body: jsonEncode({'email': email, 'senha': senha}),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      return jsonDecode(res.body);
+      return _decodeJson(res);
     }
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> cadastro(
@@ -47,10 +48,10 @@ class ApiService {
         'senha': senha,
         'confirmar_senha': confirmar,
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
@@ -59,10 +60,10 @@ class ApiService {
       Uri.parse('$baseUrl/auth/recuperar-senha'),
       headers: _headers,
       body: jsonEncode({'email': email}),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) { 
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
@@ -81,39 +82,35 @@ class ApiService {
         'nova_senha': nova,
         'confirmar_senha': confirmar,
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
-  // =========================
   // HOME
-  // =========================
 
   Future<Map<String, dynamic>> painel(int idUsuario) async {
     final res = await http.get(
       Uri.parse('$baseUrl/home/painel/$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      return jsonDecode(res.body);
+      return _decodeJson(res);
     }
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
-  // =========================
   // CATEGORIAS
-  // =========================
 
   Future<List<dynamic>> categorias(int idUsuario) async {
     final res = await http.get(
       Uri.parse('$baseUrl/catalogo/categorias/$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      final decoded = jsonDecode(res.body);
+      final decoded = _decodeJson(res);
       if (decoded is Map && decoded.containsKey('dados')) {
         return List.from(decoded['dados']);
       }
@@ -121,7 +118,7 @@ class ApiService {
       return [];
     }
 
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> criarCategoria(int idUsuario, String nome) async {
@@ -131,7 +128,7 @@ class ApiService {
     request.fields['id_usuario'] = idUsuario.toString();
     request.fields['nome_categoria'] = nome;
 
-    final response = await request.send();
+    final response = await request.send().timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final body = await response.stream.bytesToString();
@@ -151,10 +148,10 @@ class ApiService {
         'id_usuario': idUsuario,
         'nome': nome,
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
@@ -163,16 +160,14 @@ class ApiService {
       Uri.parse(
         '$baseUrl/catalogo/categorias/$idCategoria?id_usuario=$idUsuario',
       ),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
-  // =========================
   // ITENS DO CATÁLOGO
-  // =========================
 
   Future<List<dynamic>> itensCategoria(
     int idCategoria,
@@ -180,10 +175,10 @@ class ApiService {
   ) async {
     final res = await http.get(
       Uri.parse('$baseUrl/catalogo/itens/$idCategoria/$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      final decoded = jsonDecode(res.body);
+      final decoded = _decodeJson(res);
       if (decoded is Map && decoded.containsKey('dados')) {
         return List.from(decoded['dados']);
       }
@@ -191,7 +186,7 @@ class ApiService {
       return [];
     }
 
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> criarItemCategoria({
@@ -220,7 +215,7 @@ class ApiService {
       ),
     );
 
-    final response = await request.send();
+    final response = await request.send().timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(await response.stream.bytesToString());
@@ -244,7 +239,7 @@ class ApiService {
     request.fields['abreviacao'] = abreviacao;
     request.fields['quantidade_total'] = quantidade.toString();
 
-    final response = await request.send();
+    final response = await request.send().timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final body = await response.stream.bytesToString();
@@ -255,10 +250,10 @@ class ApiService {
   Future<Uint8List> imagemItem(int idUsuario, int idItem) async {
     final res = await http.get(
       Uri.parse('$baseUrl/catalogo/itens/imagem/$idItem?id_usuario=$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) return res.bodyBytes;
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> atualizarImagemItem({
@@ -279,7 +274,7 @@ class ApiService {
       ),
     );
 
-    final response = await request.send();
+    final response = await request.send().timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception(await response.stream.bytesToString());
@@ -289,24 +284,22 @@ class ApiService {
   Future<void> excluirItem(int idUsuario, int idItem) async {
     final res = await http.delete(
       Uri.parse('$baseUrl/catalogo/itens/$idItem?id_usuario=$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
-  // =========================
   // EVENTOS
-  // =========================
 
   Future<List<dynamic>> eventos(int idUsuario) async {
     final res = await http.get(
       Uri.parse('$baseUrl/eventos/$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      final decoded = jsonDecode(res.body);
+      final decoded = _decodeJson(res);
       if (decoded is Map && decoded.containsKey('dados')) {
         return List.from(decoded['dados']);
       }
@@ -314,7 +307,7 @@ class ApiService {
       return [];
     }
 
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> criarEvento(
@@ -340,7 +333,7 @@ class ApiService {
       request.fields['hora_evento'] = hora.trim();
     }
 
-    final response = await request.send();
+    final response = await request.send().timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final body = await response.stream.bytesToString();
@@ -367,10 +360,10 @@ class ApiService {
       '&hora_evento=$hora',
     );
 
-    final res = await http.put(uri);
+    final res = await http.put(uri).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
@@ -382,7 +375,7 @@ class ApiService {
       '$baseUrl/eventos/$idEvento?id_usuario=$idUsuario',
     );
 
-    final res = await http.delete(uri);
+    final res = await http.delete(uri).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
       throw Exception('Erro ao excluir evento');
@@ -393,10 +386,10 @@ class ApiService {
     final url = Uri.parse('$baseUrl/eventos/$idEvento/ativar')
         .replace(queryParameters: {'id_usuario': '$idUsuario'});
 
-    final res = await http.post(url);
+    final res = await http.post(url).timeout(_requestTimeout);
 
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Falha ao ativar: ${res.statusCode} - ${res.body}');
+      throw Exception('Falha ao ativar: ${res.statusCode} - ${_decodeBody(res)}');
     }
   }
 
@@ -414,10 +407,10 @@ class ApiService {
       },
     );
 
-    final res = await http.post(url);
+    final res = await http.post(url).timeout(_requestTimeout);
 
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Falha ao finalizar: ${res.statusCode} - ${res.body}');
+      throw Exception('Falha ao finalizar: ${res.statusCode} - ${_decodeBody(res)}');
     }
   }
 
@@ -437,25 +430,23 @@ class ApiService {
         'status': status,
         'devolucoes': devolucoes, // [{id_item: 1, qtd_devolvida: 3}, ...]
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode < 200 || res.statusCode >= 300) {
-      throw Exception('Falha ao finalizar: ${res.statusCode} - ${res.body}');
+      throw Exception('Falha ao finalizar: ${res.statusCode} - ${_decodeBody(res)}');
     }
   }
 
-  // =========================
   // ITENS DO EVENTO (CORRIGIDO)
-  // =========================
 
   Future<List<dynamic>> itensEvento(int idUsuario, int idEvento) async {
-    // ✅ rota coerente com o padrão de /eventos
+    // rota coerente com o padrão de /eventos
     final res = await http.get(
       Uri.parse('$baseUrl/eventos/$idEvento/itens?id_usuario=$idUsuario'),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode == 200) {
-      final decoded = jsonDecode(res.body);
+      final decoded = _decodeJson(res);
       if (decoded is Map && decoded.containsKey('dados')) {
         return List.from(decoded['dados']);
       }
@@ -463,7 +454,7 @@ class ApiService {
       return [];
     }
 
-    throw Exception(res.body);
+    throw Exception(_decodeBody(res));
   }
 
   Future<void> adicionarItemEvento(
@@ -479,16 +470,14 @@ class ApiService {
         '&id_item=$idItem'
         '&quantidade=$quantidade',
       ),
-    );
+    ).timeout(_requestTimeout);
 
     if (res.statusCode != 200) {
-      throw Exception(res.body);
+      throw Exception(_decodeBody(res));
     }
   }
 
-  // =========================
   // PDF EVENTO
-  // =========================
 
   Future<void> abrirPdfEvento(int idUsuario, int idEvento) async {
     final url = Uri.parse(
@@ -507,9 +496,9 @@ class ApiService {
     }
   }
 
-  // =========================
+
   // URL IMAGEM ITEM
-  // =========================
+
 
   String imagemItemUrl(int idUsuario, int idItem) {
     return '$baseUrl/catalogo/itens/imagem/$idItem?id_usuario=$idUsuario';

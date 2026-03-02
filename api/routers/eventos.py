@@ -11,9 +11,7 @@ from reportlab.pdfgen import canvas
 import tempfile
 
 
-# ==================================================
 # MODELOS PYDANTIC
-# ==================================================
 
 class DevolucaoItem(BaseModel):
     id_item: int
@@ -27,9 +25,7 @@ class FinalizarEventoBody(BaseModel):
 
 router = APIRouter()
 
-# ==================================================
 # EVENTOS (CRUD)
-# ==================================================
 
 @router.get("/usuario/{id_usuario}")
 def listar_eventos(id_usuario: int):
@@ -73,7 +69,7 @@ def criar_evento(
     cur = con.cursor()
 
     try:
-        # 🔒 garante que o usuário existe
+        # garante que o usuário existe
         cur.execute(
             "SELECT id_usuario FROM usuarios WHERE id_usuario = %s",
             (id_usuario,)
@@ -81,7 +77,7 @@ def criar_evento(
         if not cur.fetchone():
             raise HTTPException(400, "Usuário não existe")
 
-        # 🔥 created_by OBRIGATÓRIO (FK)
+        # created_by (FK)
         cur.execute("""
             INSERT INTO eventos
             (
@@ -162,7 +158,7 @@ def excluir_evento(id_evento: int, id_usuario: int):
     con = get_connection()
     cur = con.cursor(dictionary=True)
     try:
-        # 1️⃣ Busca itens do evento
+        #  Busca itens do evento
         cur.execute("""
             SELECT id_item,
                    quantidade_locada,
@@ -172,7 +168,7 @@ def excluir_evento(id_evento: int, id_usuario: int):
         """, (id_evento,))
         itens = cur.fetchall()
 
-        # 2️⃣ Devolve tudo ao estoque
+        # Devolve tudo ao estoque
         for item in itens:
             em_uso = item["quantidade_locada"] - item["quantidade_devolvida"]
 
@@ -183,13 +179,13 @@ def excluir_evento(id_evento: int, id_usuario: int):
                     WHERE id_item=%s AND id_usuario=%s
                 """, (em_uso, item["id_item"], id_usuario))
 
-        # 3️⃣ Remove itens do evento
+        # Remove itens do evento
         cur.execute("""
             DELETE FROM itens_evento
             WHERE id_evento=%s
         """, (id_evento,))
 
-        # 4️⃣ Remove o evento
+        # Remove o evento
         cur.execute("""
             DELETE FROM eventos
             WHERE id_evento=%s AND id_usuario=%s
@@ -201,10 +197,7 @@ def excluir_evento(id_evento: int, id_usuario: int):
         cur.close()
         con.close()
 
-
-# ==================================================
 # ITENS DO EVENTO
-# ==================================================
 
 def _quantidade_disponivel(cur, id_usuario: int, id_item: int) -> int:
     cur.execute("""
@@ -315,10 +308,7 @@ def adicionar_item_evento(
         cur.close()
         con.close()
 
-
-# ==================================================
 # PDF
-# ==================================================
 
 @router.get("/{id_evento}/pdf")
 def gerar_pdf(

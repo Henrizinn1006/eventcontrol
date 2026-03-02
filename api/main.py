@@ -9,9 +9,8 @@ from routers import home
 
 app = FastAPI(title="EventControl API")
 
-# ==============
 # CORS
-# ==============
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],        
@@ -20,9 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================
 # ROTAS
-# =========================
+
 app.include_router(
     auth.router,
     prefix="/auth",
@@ -48,9 +46,8 @@ app.include_router(
     tags=["Eventos"]
 )
 
-# =========================
 # ROOT
-# =========================
+
 @app.get("/")
 def root():
     return {"status": "EventControl API online"}
