@@ -28,9 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool loading = false;
   bool lembrarMe = false;
 
-  // =========================
   // LOGIN
-  // =========================
+
 
   Future<void> entrar() async {
     setState(() => loading = true);
@@ -52,13 +51,12 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       _msg(e.toString());
     } finally {
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
 
-  // =========================
   // CADASTRO
-  // =========================
+
 
   void dialogCadastro() {
     final nome = TextEditingController();
@@ -104,9 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // =========================
   // RECUPERAÇÃO DE SENHA (3 ETAPAS CORRETAS)
-  // =========================
 
   void dialogRecuperarSenha() {
     final email = TextEditingController();
@@ -209,9 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // =========================
   // UTIL
-  // =========================
 
   void _msg(String txt) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -226,9 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // =========================
   // UI
-  // =========================
 
   @override
   Widget build(BuildContext context) {

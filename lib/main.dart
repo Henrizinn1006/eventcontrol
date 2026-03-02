@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'theme/app_theme.dart';
 import 'login.dart';
 import 'home.dart';
 
@@ -15,7 +17,7 @@ class EventControlApp extends StatefulWidget {
 }
 
 class _EventControlAppState extends State<EventControlApp> {
-  bool darkMode = false;
+  bool darkMode = true; // já inicia no escuro (recomendado)
   int? idUsuario;
   bool isLoading = true;
 
@@ -28,33 +30,27 @@ class _EventControlAppState extends State<EventControlApp> {
   Future<void> _verificarLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final logado = prefs.getBool('logado') ?? false;
-    
+
     if (logado) {
       final id = prefs.getInt('id_usuario');
       if (id != null) {
-        setState(() {
-          idUsuario = id;
-        });
+        idUsuario = id;
       }
     }
-    
+
     setState(() {
       isLoading = false;
     });
   }
 
-  // =========================
   // CONTROLE DE TEMA
-  // =========================
   void toggleTheme() {
     setState(() {
       darkMode = !darkMode;
     });
   }
 
-  // =========================
   // LOGIN / LOGOUT
-  // =========================
   void login(int id) {
     setState(() {
       idUsuario = id;
@@ -64,19 +60,24 @@ class _EventControlAppState extends State<EventControlApp> {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
     setState(() {
       idUsuario = null;
     });
   }
 
-  // =========================
   // APP
-  // =========================
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: darkMode ? ThemeData.dark() : ThemeData.light(),
+
+      // TEMAS
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
+
+      // CONTROLE DE TELAS
       home: isLoading
           ? const Scaffold(
               body: Center(

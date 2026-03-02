@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 
-/// =======================================================
 /// TELA PRINCIPAL — LISTA DE EVENTOS
-/// =======================================================
 
 String formatHora(dynamic hora) {
   if (hora == null) return "-";
@@ -149,9 +147,7 @@ class _EventosScreenState extends State<EventosScreen> {
   }
 }
 
-/// =======================================================
 /// DETALHE DO EVENTO
-/// =======================================================
 
 class EventoDetalheScreen extends StatefulWidget {
   final int idUsuario;
@@ -170,6 +166,8 @@ class EventoDetalheScreen extends StatefulWidget {
 class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
   final api = ApiService();
   bool _carregando = false;
+  static const double _dialogWidth = 320;
+  static const EdgeInsets _dialogInset = EdgeInsets.fromLTRB(24, 24, 80, 24);
 
   void _abrirPdf() {
     launchUrl(
@@ -221,11 +219,15 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        insetPadding: _dialogInset,
         title: const Text('Excluir evento'),
-        content: const Text(
-          'Este evento será excluído permanentemente.\n'
-          'Todos os itens serão devolvidos ao estoque.\n\n'
-          'Deseja continuar?',
+        content: const SizedBox(
+          width: _dialogWidth,
+          child: Text(
+            'Este evento será excluído permanentemente.\n'
+            'Todos os itens serão devolvidos ao estoque.\n\n'
+            'Deseja continuar?',
+          ),
         ),
         actions: [
           TextButton(
@@ -291,6 +293,16 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.inventory),
               label: const Text('Itens do Evento'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
               onPressed: _carregando
                   ? null
                   : () {
@@ -315,6 +327,16 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
                     )
                   : const Icon(Icons.play_arrow),
               label: const Text('Ativar evento'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
               onPressed: (!_carregando && status == 'agendado') ? _ativar : null,
             ),
 
@@ -327,6 +349,16 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
                     )
                   : const Icon(Icons.check),
               label: const Text('Concluir evento'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
               onPressed: widget.evento['status'] == 'ativo'
                   ? () async {
                       try {
@@ -344,9 +376,10 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
                         final confirmado = await showDialog<bool>(
                           context: context,
                           builder: (_) => AlertDialog(
+                            insetPadding: _dialogInset,
                             title: const Text('Devolução de itens'),
                             content: SizedBox(
-                              width: 380,
+                              width: _dialogWidth,
                               child: SingleChildScrollView(
                                 child: Column(
                                   children: [
@@ -427,28 +460,33 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('Baixar PDF'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
               onPressed: _carregando ? null : _abrirPdf,
             ),
 
             ElevatedButton.icon(
               onPressed: _carregando ? null : () => _confirmarExcluir(context),
-              icon: const Icon(
-                Icons.delete,
-                color: Colors.red,
-              ),
+              icon: const Icon(Icons.delete),
               label: const Text(
                 'Excluir evento',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.red,
+                minimumSize: const Size.fromHeight(48),
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                foregroundColor: Theme.of(context).colorScheme.error,
                 elevation: 0,
-                side: const BorderSide(
-                  color: Colors.red,
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.6),
                   width: 1.2,
                 ),
                 shape: RoundedRectangleBorder(
@@ -467,9 +505,7 @@ class _EventoDetalheScreenState extends State<EventoDetalheScreen> {
   }
 }
 
-/// =======================================================
 /// ITENS DO EVENTO
-/// =======================================================
 
 class EventoItensScreen extends StatefulWidget {
   final int idUsuario;
@@ -559,9 +595,7 @@ class _EventoItensScreenState extends State<EventoItensScreen> {
   }
 }
 
-/// =======================================================
 /// CATÁLOGO - CATEGORIAS
-/// =======================================================
 
 class CatalogoCategoriasScreen extends StatelessWidget {
   final int idUsuario;
@@ -615,9 +649,7 @@ class CatalogoCategoriasScreen extends StatelessWidget {
   }
 }
 
-/// =======================================================
 /// CATÁLOGO - ITENS DA CATEGORIA
-/// =======================================================
 
 class CatalogoItensScreen extends StatelessWidget {
   final int idUsuario;
