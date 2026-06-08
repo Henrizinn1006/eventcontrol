@@ -1,86 +1,87 @@
-# eventcontrol_api
+<h1 align="center">📦 EventControl</h1>
+<p align="center">Sistema completo para gerenciamento de eventos e controle de estoque — mobile + API</p>
 
-EventControl — Sistema de Gerenciamento de Eventos
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/>
+</p>
 
-O EventControl é um sistema completo para gerenciamento de eventos e controle de itens, desenvolvido para simular um cenário real de negócio (locação, controle, organização e acompanhamento de eventos).
+---
 
-O projeto foi criado com foco em backend, utilizando API REST, banco de dados relacional e integração com aplicação cliente, seguindo boas práticas de organização e arquitetura.
+## 📌 Sobre o projeto
 
-## Objetivo do Projeto
+O **EventControl** é um sistema full-stack (mobile + backend) para empresas de eventos e locação de itens. Conecta o **estoque físico** a cada **evento**, permitindo controle em tempo real de disponibilidade, movimentações e relatórios.
 
-- Gerenciar eventos
-- Controlar itens vinculados a cada evento
-- Registrar usuários e permissões
-- Simular um sistema real usado por empresas de eventos/decoração
-- Servir como projeto prático de estudo e portfólio profissional
+---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias
 
-**Backend:**
+| Camada | Tecnologia |
+|--------|-----------|
+| App Mobile | Flutter (Android e iOS) |
+| Backend | Python 3 + FastAPI |
+| Banco | MySQL |
+| ORM | SQLAlchemy |
+| Autenticação | JWT |
+| Docs | Swagger / OpenAPI |
+| Servidor | Uvicorn |
 
-- Python
-- FastAPI
-- Uvicorn
-- MySQL
-- SQLAlchemy
+---
 
-**Frontend / App:**
+## 🚀 Como rodar
 
-- Flutter (consumo da API)
+### Backend (API)
 
-**Outros:**
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
 
-- Git & GitHub
-- API REST
-- JSON
-- CORS Middleware
-- Swagger (OpenAPI)
+Swagger: **http://localhost:8000/docs**
 
-## Funcionalidades
+### App Flutter
 
-- Cadastro e autenticação de usuários
-- Criação e gerenciamento de eventos
-- Cadastro e controle de itens
-- Associação de itens a eventos
-- Controle de quantidades
-- API documentada com Swagger
-- Estrutura preparada para expansão
+```bash
+flutter pub get
+flutter run
+```
 
-## Demonstração (telas)
+> Configure a URL da API em `lib/services/api_service.dart` apontando para `http://localhost:8000`.
 
-| Login (modo claro) | Home | Catálogo (categorias) |
-| --- | --- | --- |
-| ![Login (modo claro)](assets/images/loginmodoclaro.jpeg) | ![Home](assets/images/home.jpeg) | ![Catálogo (categorias)](assets/images/catalogocategoria.jpeg) |
+---
 
-| Itens do catálogo | Dados do item | Novo item |
-| --- | --- | --- |
-| ![Itens do catálogo](assets/images/itenscatalogo.jpeg) | ![Dados do item](assets/images/dadositem.jpeg) | ![Novo item](assets/images/novoitem.jpeg) |
+## 📊 Funcionalidades
 
-| Nova categoria | Novo item (nova categoria) | Edição no item |
-| --- | --- | --- |
-| ![Adicionar categoria](assets/images/adicionarcategoria.jpeg) | ![Novo item (nova categoria)](assets/images/novoitemnovacategoria.jpeg) | ![Edição no item](assets/images/ediçãonoitem.jpeg) |
+- ✅ Autenticação e controle de acesso por usuário (JWT)
+- ✅ Cadastro de itens com categorias e disponibilidade
+- ✅ Criação e gerenciamento de eventos
+- ✅ Associação de itens a eventos com controle de quantidade
+- ✅ Geração de PDF por evento
+- ✅ Dark mode / Light mode
+- ✅ API REST documentada com Swagger
+- ✅ Conclusão com devolução automática de itens ao estoque
 
-| Evento criado | Itens do evento | Adicionando itens no evento |
-| --- | --- | --- |
-| ![Evento criado](assets/images/teladoeventocriado.jpeg) | ![Itens do evento](assets/images/itensdoevento.jpeg) | ![Adicionando itens no evento](assets/images/adicionandoitensnoevento.jpeg) |
+---
 
-| Item adicionado | Modo escuro | PDF gerado |
-| --- | --- | --- |
-| ![Item adicionado](assets/images/itemadicionado.jpeg) | ![Modo escuro](assets/images/modoescuroerec.jpeg) | ![PDF gerado](assets/images/pdfgerado.jpeg) |
+## 🔌 API REST
 
-| Conclusão com devolução | Criando um evento | Alteração na disponibilidade |
-| --- | --- | --- |
-| ![Conclusão com devolução](assets/images/conclusãocomdevolução.jpeg) | ![Criando um evento](assets/images/criandoumevento.jpeg) | ![Alteração na disponibilidade](assets/images/alteraçãonadisponibilidade.jpeg) |
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/auth/login` | Autenticação JWT |
+| GET/POST | `/itens` | Listar / Criar itens |
+| GET/POST | `/eventos` | Listar / Criar eventos |
+| POST | `/eventos/{id}/itens` | Adicionar item ao evento |
+| GET | `/relatorios/{evento_id}` | Gerar relatório PDF |
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 👨‍💻 Autor
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Henrique Tavares**
+- GitHub: [@Henrizinn1006](https://github.com/Henrizinn1006)
+- LinkedIn: [linkedin.com/in/henriquetavares1006](https://linkedin.com/in/henriquetavares1006)
+- Email: htavares803@gmail.com
